@@ -58,6 +58,10 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
 .chips{display:flex;gap:8px;overflow-x:auto;padding-block:16px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 15px;font-weight:600;font-size:14px}
+.card{cursor:pointer}.ttl{all:unset;cursor:pointer;font:inherit;color:inherit}.ttl:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.tile.big{height:220px;border-radius:14px}.dprice{font:800 26px var(--font-display);margin:14px 0 4px}.ddesc{margin:0 0 12px;color:var(--muted);line-height:1.5}
+.dfacts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.dfacts div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:2px}.dfacts span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}.dfacts b{font-size:14px}
+.dctl{display:flex;gap:10px;align-items:center}.dctl .primary{flex:1}
 .sizes{display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap}.sz{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-weight:600;font-size:13px}.sz[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
@@ -199,7 +203,9 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     {id:"asj", name:"Asun jollof with chicken", cat:"Rice", price:6000, spice:4, mins:40, h:10, desc:"Smoky party jollof with peppered asun and chicken."},
     {id:"jam", name:"Jambalaya rice with chicken", cat:"Rice", price:8500, spice:3, mins:40, h:18, desc:"One-pot rice with chicken, sausage, peppers and Cajun spice."},
     {id:"pch", name:"Pepper chicken", cat:"Grill & bites", price:3000, spice:4, mins:40, h:4, desc:"Fried chicken tossed in a hot pepper and onion sauce."},
-    {id:"cbb", name:"Catfish barbecue", cat:"Grill & bites", price:6000, spice:3, mins:40, h:24, desc:"Whole catfish grilled over charcoal with suya-style pepper rub."},
+    {id:"cbb-s", grp:"cbb", gname:"Catfish barbecue", size:"Small", img:"cbb", name:"Catfish barbecue, Small", cat:"Grill & bites", price:6000, spice:3, mins:40, h:24, desc:"Catfish grilled over charcoal with suya-style pepper rub."},
+    {id:"cbb-m", grp:"cbb", gname:"Catfish barbecue", size:"Medium", img:"cbb", name:"Catfish barbecue, Medium", cat:"Grill & bites", price:7000, spice:3, mins:40, h:24, desc:"Catfish grilled over charcoal with suya-style pepper rub."},
+    {id:"cbb-l", grp:"cbb", gname:"Catfish barbecue", size:"Large", img:"cbb", name:"Catfish barbecue, Large", cat:"Grill & bites", price:8500, spice:3, mins:40, h:24, desc:"Catfish grilled over charcoal with suya-style pepper rub."},
     {id:"crk", name:"Croaker fish BBQ", cat:"Grill & bites", price:8000, spice:3, mins:40, h:30, desc:"Croaker fish grilled over charcoal and basted in barbecue pepper."},
     {id:"ccl", name:"Chicken & chips (large)", cat:"Grill & bites", price:7500, spice:2, mins:40, h:38, desc:"Large portion of crisp fried chicken with golden chips and pepper dip."},
     {id:"ccm", name:"Chicken & chips (medium)", cat:"Grill & bites", price:5200, spice:2, mins:40, h:42, desc:"Medium portion of crisp fried chicken with golden chips and pepper dip."},
@@ -226,7 +232,7 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     {id:"egg", name:"Egg", cat:"Extras", price:300, spice:0, mins:40, h:48, desc:"Add a boiled egg to any meal."}
   ];
   var CATS = ["All","Shawarma","Rice","Grill & bites","Soups","Drinks","Dessert","Extras"];
-  var state = {cat:"All", sel:{}, cart:{}, open:false, step:"cart", busy:false, err:"", last:null,
+  var state = {cat:"All", sel:{}, detail:"", cart:{}, open:false, step:"cart", busy:false, err:"", last:null,
     form:{mode:"delivery", name:"", phone:"", address:"", notes:"", pay:"card"}};
   var $ = function(s){return document.querySelector(s)};
   var money = function(n){return "₦"+n.toLocaleString("en-NG")};
@@ -376,8 +382,8 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     $("#grid").innerHTML = items.map(function(m){
       var sizes = "";
       if(m.grp) sizes = '<div class="sizes" role="group" aria-label="Size">'+MENU.filter(function(x){return x.grp===m.grp}).map(function(x){return '<button type="button" class="sz" data-size="'+x.id+'" aria-pressed="'+(x.id===m.id)+'">'+esc(x.size)+'</button>'}).join("")+'</div>';
-      return '<article class="card"><div class="tile" style="--h:'+m.h+'">'+art(m.img?Object.assign({},m,{id:m.img}):m)+'<em>'+esc(m.cat)+'</em></div>'+
-        '<div class="cbody"><h3>'+esc(m.gname||m.name)+'</h3><p>'+esc(m.desc)+'</p>'+sizes+
+      return '<article class="card" data-open="'+m.id+'"><div class="tile" style="--h:'+m.h+'">'+art(m.img?Object.assign({},m,{id:m.img}):m)+'<em>'+esc(m.cat)+'</em></div>'+
+        '<div class="cbody"><h3><button type="button" class="ttl" data-open="'+m.id+'">'+esc(m.gname||m.name)+'</button></h3><p>'+esc(m.desc)+'</p>'+sizes+
         '<div class="meta">'+spiceDots(m.spice)+'<span>'+m.mins+' min</span></div>'+
         '<div class="foot"><span class="price">'+money(m.price)+'</span><span data-ctl="'+m.id+'">'+ctl(m)+'</span></div></div></article>';
     }).join("");
@@ -400,7 +406,7 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     var el = document.querySelector('[data-ctl="'+id+'"]');
     if(el) el.innerHTML = ctl(byId(id));
     renderBars();
-    if(state.open && state.step==="cart") renderSheet();
+    if(state.open && (state.step==="cart"||state.step==="item")) renderSheet();
   }
 
   /* sheet */
@@ -408,6 +414,19 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     return '<div class="sum"><div><span>Subtotal</span><span>'+money(subtotal())+'</span></div>'+
       '<div><span>'+(state.form.mode==="delivery"?"Delivery":"Pickup")+'</span><span>'+(state.form.mode==="delivery"?"By location":"Free")+'</span></div>'+
       '<div class="grand"><span>Total</span><span>'+money(total())+'</span></div></div>';
+  }
+  function stepItem(){
+    var m = byId(state.detail); if(!m) return {title:"Dish",body:"",foot:""};
+    var siblings = m.grp ? MENU.filter(function(x){return x.grp===m.grp}) : [];
+    var sizes = siblings.length ? '<div class="field"><span class="legend">Choose size</span><div class="sizes" role="group" aria-label="Size">'+siblings.map(function(x){return '<button type="button" class="sz" data-size="'+x.id+'" aria-pressed="'+(x.id===m.id)+'">'+esc(x.size)+' · '+money(x.price)+'</button>'}).join("")+'</div></div>' : "";
+    var body = '<div class="tile big" style="--h:'+m.h+'">'+art(m.img?Object.assign({},m,{id:m.img}):m)+'</div>'+
+      '<div class="dprice">'+money(m.price)+'</div><p class="ddesc">'+esc(m.desc)+'</p>'+sizes+
+      '<div class="dfacts"><div><span>Category</span><b>'+esc(m.cat)+'</b></div><div><span>Ready in</span><b>about '+m.mins+' min</b></div><div><span>Heat</span><b>'+(m.spice?m.spice+'/5':'Not spicy')+'</b></div></div>'+
+      '<div class="note">Pickup is free. Delivery fee depends on your location and we confirm it on WhatsApp. Open daily 10am to 10pm.</div>';
+    var q = state.cart[m.id]||0;
+    var foot = (q? '<div class="dctl"><div class="step"><button type="button" data-dec="'+m.id+'" aria-label="Remove one">−</button><output>'+q+'</output><button type="button" data-add="'+m.id+'" aria-label="Add one">+</button></div><button class="primary" type="button" data-go="cart">View order · '+money(total())+'</button></div>'
+      : '<button class="primary" type="button" data-add="'+m.id+'">Add to order · '+money(m.price)+'</button>');
+    return {title:esc(m.gname||m.name), body:body, foot:foot};
   }
   function stepCart(){
     var L = lines();
@@ -462,7 +481,7 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     return {title:"Thank you, "+esc(o.name.split(" ")[0]), body:body, foot:'<a class="paylink wa" href="https://wa.me/2349161703363?text='+encodeURIComponent(waText(o))+'" target="_blank" rel="noopener noreferrer">Send order on WhatsApp ↗</a><button class="ghost" type="button" data-close data-reset>Start a new order</button>'};
   }
   function renderSheet(){
-    var s = state.step==="cart"?stepCart():state.step==="details"?stepDetails():state.step==="pay"?stepPay():stepDone();
+    var s = state.step==="item"?stepItem():state.step==="cart"?stepCart():state.step==="details"?stepDetails():state.step==="pay"?stepPay():stepDone();
     $("#layer").innerHTML = '<div class="veil" data-veil><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="st">'+
       '<div class="shead"><h2 id="st">'+s.title+'</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
       '<div class="sbody">'+s.body+'</div><div class="sfoot">'+s.foot+'</div></div></div>';
@@ -472,9 +491,11 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
     document.body.classList.add("lock"); renderSheet(); renderBars();
     var x = document.querySelector(".sheet .x"); if(x) x.focus();
   }
+  function openItem(id){state.detail=id; openSheet("item");}
   function closeSheet(reset){
     state.open = false; state.busy=false; document.body.classList.remove("lock");
     $("#layer").innerHTML = "";
+    if(!reset) renderGrid();
     if(reset){state.cart={}; state.step="cart"; state.form.notes=""; renderGrid();}
     renderBars();
   }
@@ -504,9 +525,11 @@ h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:
 
   /* events */
   document.addEventListener("click", function(e){
+    if(!state.open && !e.target.closest("button,a,input,textarea,select")){var cd=e.target.closest(".card[data-open]"); if(cd){openItem(cd.dataset.open); return;}}
     var t = e.target.closest("button,[data-veil]"); if(!t) return;
     if(t.hasAttribute("data-veil")){ if(e.target===t && !state.busy) closeSheet(false); return; }
-    if(t.dataset.size){var sv=byId(t.dataset.size); if(sv){state.sel[sv.grp]=sv.id; renderGrid();} return;}
+    if(t.dataset.open){openItem(t.dataset.open); return;}
+    if(t.dataset.size){var sv=byId(t.dataset.size); if(sv){state.sel[sv.grp]=sv.id; if(state.open&&state.step==="item"){state.detail=sv.id; renderSheet();} renderGrid();} return;}
     if(t.dataset.cat){state.cat=t.dataset.cat; renderChips(); renderGrid(); return;}
     if(t.dataset.add){var a=t.dataset.add; state.cart[a]=(state.cart[a]||0)+1; refreshCtl(a); return;}
     if(t.dataset.dec){var d=t.dataset.dec; state.cart[d]=Math.max(0,(state.cart[d]||0)-1); refreshCtl(d); return;}
